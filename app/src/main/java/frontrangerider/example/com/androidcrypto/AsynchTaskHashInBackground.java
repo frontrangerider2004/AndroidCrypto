@@ -1,4 +1,4 @@
-package com.example.emperor.cryptoexample1;
+package frontrangerider.example.com.androidcrypto;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -6,6 +6,10 @@ import android.util.Log;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import frontrangerider.example.com.androidcrypto.interfaces.InterfaceHashStatus;
+import frontrangerider.example.com.androidcrypto.utils.LogTag;
+import frontrangerider.example.com.androidcrypto.utils.SimpleHexEncoder;
 
 /**
  * Created by emperor on 12/30/14.

@@ -1,4 +1,4 @@
-package com.example.emperor.cryptoexample1;
+package frontrangerider.example.com.androidcrypto.interfaces;
 
 /**
  * Created by emperor on 12/31/14.

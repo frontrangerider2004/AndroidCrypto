@@ -1,4 +1,4 @@
-package com.example.emperor.cryptoexample1;
+package frontrangerider.example.com.androidcrypto;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -14,9 +14,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Button;
 
-import com.example.emperor.cyrptoexample.R;
+import frontrangerider.example.com.androidcrypto.R;
+import frontrangerider.example.com.androidcrypto.interfaces.InterfaceHashStatus;
+import frontrangerider.example.com.androidcrypto.utils.LogTag;
 
-public class MainActivity extends ActionBarActivity implements InterfaceHashStatus{
+public class MainActivity extends ActionBarActivity implements InterfaceHashStatus {
 
     //User input and control
     private EditText editTextInput;
@@ -353,6 +355,7 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
     @Override
     public void onHashComplete(String hashString, String provider, String algorithm) {
         Log.d(LogTag.TAG, "onHashComplete(): hashString= " + hashString + ", Provider= " + provider + ", Algorithm= " + algorithm);
+        //TODO Change these to use the helper methods defined above
         textViewHash.setText(hashString);
         textViewHashAlgorithm.setText(String.format(mResources.getString(R.string.hash_algorithm), algorithm));
         textViewHashProvider.setText(String.format(mResources.getString(R.string.hash_provider), provider));
@@ -361,6 +364,7 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
     //TODO change this into the overridden callback after implementing it in the Interface
     public void updatePBKDFhashUserInterface() {
         Log.d(LogTag.TAG, "onPBKDFhashComplete()");
+        //TODO Change these to use the helper methods defined above
         textViewPBKDFhash.setText(getmPBKDFhashString());
         textviewPBKDFsalt.setText(String.format(mResources.getString(R.string.pbkdf_salt), getmSalt()));
         textviewPBKDFsaltBitLength.setText(String.format(mResources.getString(R.string.pbkdf_salt_bitLength), getmSaltBitLength()));
