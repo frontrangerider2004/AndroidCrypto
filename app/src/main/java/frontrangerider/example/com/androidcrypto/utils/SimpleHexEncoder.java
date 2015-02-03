@@ -2,9 +2,6 @@ package frontrangerider.example.com.androidcrypto.utils;
 
 import android.util.Log;
 
-/**
- * Created by emperor on 12/31/14.
- */
 public class SimpleHexEncoder {
 
     /**

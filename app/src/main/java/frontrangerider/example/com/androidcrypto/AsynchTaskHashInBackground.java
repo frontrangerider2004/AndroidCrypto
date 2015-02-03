@@ -11,9 +11,6 @@ import frontrangerider.example.com.androidcrypto.interfaces.InterfaceHashStatus;
 import frontrangerider.example.com.androidcrypto.utils.LogTag;
 import frontrangerider.example.com.androidcrypto.utils.SimpleHexEncoder;
 
-/**
- * Created by emperor on 12/30/14.
- */
 public class AsynchTaskHashInBackground  extends AsyncTask<Void, Void, String>{
 
     //For Standard Hashes

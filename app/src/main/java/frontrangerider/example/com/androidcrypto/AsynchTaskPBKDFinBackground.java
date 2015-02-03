@@ -2,9 +2,6 @@ package frontrangerider.example.com.androidcrypto;
 
 import android.os.AsyncTask;
 
-/**
- * Created by emperor on 12/31/14.
- */
 public class AsynchTaskPBKDFinBackground extends AsyncTask<Void, Void, String> {
 
     private static final String HEX_FORMATTER = "%02x"; //Read two bytes as lower case hex
