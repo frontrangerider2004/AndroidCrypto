@@ -7,10 +7,26 @@ import android.util.Log;
  */
 public class SimpleHexEncoder {
 
-    private static final String HEX_FORMATTER_LOWER = "%02x"; //Read two bytes as lower case hex
-    private static final String HEX_FORMATTER_UPPER = "%02x"; //Read two bytes as lower case hex
+    /**
+     * The format string to use for Hexidecimal output via
+     * StringFormatter. Reads two bytes and prints as lower
+     * case hex
+     */
+    public static final String FORMATTER_HEX_LOWER = "%02x"; //Read two bytes as lower case hex
+
+    /**
+     * The format string to use for Hexidecimal output via
+     * StringFormatter. Reads two bytes and prints as upper
+     * case hex
+     */
+    public static final String FORMATTER_HEX_UPPER = "%02X"; //Read two bytes as upper case hex
     private String hexFormatStyle = null;
 
+    //TODO Encapsulate this enum in it's own class since it's used in more than one.
+    /**
+     * Enum to specify the font case of either upper
+     * or lower during creation of the hex formatter.
+     */
     public static enum FontCase{UPPER, LOWER}
 
     /**
@@ -22,10 +38,10 @@ public class SimpleHexEncoder {
 
         switch (fontCaseEnum){
             case UPPER:
-                hexFormatStyle = HEX_FORMATTER_UPPER;
+                hexFormatStyle = FORMATTER_HEX_UPPER;
                 break;
             case LOWER:
-                hexFormatStyle = HEX_FORMATTER_LOWER;
+                hexFormatStyle = FORMATTER_HEX_LOWER;
                 break;
             default:
                 break;
