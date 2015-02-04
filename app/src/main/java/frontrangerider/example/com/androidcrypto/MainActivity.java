@@ -14,8 +14,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Button;
 
-import frontrangerider.example.com.androidcrypto.R;
 import frontrangerider.example.com.androidcrypto.interfaces.InterfaceHashStatus;
+import frontrangerider.example.com.androidcrypto.utils.CryptoUtils;
 import frontrangerider.example.com.androidcrypto.utils.LogTag;
 
 public class MainActivity extends ActionBarActivity implements InterfaceHashStatus {
@@ -84,14 +84,15 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
 
         //PBKDF Hashing UI
         textViewPBKDFhash = (TextView) findViewById(R.id.textView_pbkdf_hashed);
-        textviewPBKDFsalt = (TextView) findViewById(R.id.textView_pbkdf_algorithm);
+        textviewPBKDFsalt = (TextView) findViewById(R.id.textView_pbkdf_salt);
         textviewPBKDFAlgorithm = (TextView) findViewById(R.id.textView_pbkdf_algorithm);
-        textviewPBKDFprovider = (TextView) findViewById(R.id.textView_pbkdf_algorithm);
+        textviewPBKDFprovider = (TextView) findViewById(R.id.textView_pbkdf_provider);
         textviewPBKDFsaltBitLength = (TextView) findViewById(R.id.textView_pbkdf_salt_bitLength);
         textviewPBKDiterations = (TextView) findViewById(R.id.textView_pbkdf_iterations);
 
         registerClickListeners();
 
+        resetTextViews();
     }
 
     @Override
@@ -122,17 +123,13 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
     View.OnClickListener hashButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+
+            hideKeyboard();
+
             //TODO Hash the string normally
-            new AsynchTaskHashInBackground(interfaceHashStatus, SHA_ALGORITHM, editTextInput.getText().toString()).execute();
+            new AsyncTaskDoCryptoInBackground(interfaceHashStatus, CryptoUtils.ALGORITHM_SHA256, getTextInputAsCharacterArray(editTextInput)).execute();
 
             //TODO hash the string with the PBKDF methods
-
-            //Hide the keyboard so we can see the screen
-            InputMethodManager inputManager = (InputMethodManager)
-                    getSystemService(Context.INPUT_METHOD_SERVICE);
-
-            inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
-                    InputMethodManager.HIDE_NOT_ALWAYS);
         }
     };
 
@@ -145,232 +142,94 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
         buttonHash.setOnClickListener(hashButtonClickListener);
     }
 
-//    /**
-//     * Generates a hash of the supplied string using
-//     * the supplied algorithm and UTF-8 encoding.
-//     * @param algorithm
-//     * @param textToHash
-//     * @return
-//     */
-//    public String hashString(String algorithm, String textToHash){
-//        MessageDigest messageDigest = null;
-//
-//        try {
-//            messageDigest = MessageDigest.getInstance(algorithm);
-//            messageDigest.update(textToHash.getBytes(UTF_ENCODING));
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        } catch (UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //For the UI
-//        if(messageDigest.getAlgorithm() != null){
-//            setmHashAlgorithmr(messageDigest.getAlgorithm());
-//            Log.d(TAG, "hashString(): messageDigest.getAlgorithm(): " + messageDigest.getAlgorithm());
-//        } else {
-//            setmHashAlgorithmr(NA_STRING);
-//        }
-//
-//        //For the UI
-//        if(messageDigest.getProvider().getName() != null){
-//            setmHashProvider(messageDigest.getProvider().getName());
-//            Log.d(TAG, "hashString(): messageDigest.getProvider(): " + messageDigest.getProvider().getName());
-//        } else {
-//            setmHashProvider(NA_STRING);
-//        }
-//
-//        Log.d(TAG, "hashString(): Successfully hashed the input string.");
-//        return encodeHexString(messageDigest.digest()); //The hash of the text in hex encoding
-//    }
-//
-//    /**
-//     * Gets the specified number of secure random bytes
-//     * using the javax security API and returns this
-//     * array for use as a salt in PBKD functions.
-//     * @param numberOfBytes
-//     * @return
-//     */
-//    private byte[] generateSaltBytes(int numberOfBytes){
-//        SecureRandom secureRandom = new SecureRandom();
-//        byte[] salt = new byte[numberOfBytes];
-//        secureRandom.nextBytes(salt);
-//
-//        Log.d(TAG, "generateSaltBytes(): Salt generation complete.");
-//
-//        setmSalt(salt);
-//
-//        return salt;
-//    }
-//
-//    /**
-//     * Generates a keyed, stretched, and multi-iterated
-//     * hash of the supplied character array using the
-//     * supplied algorithm and number of iterations.
-//     * @param password
-//     * @param saltBitLength
-//     * @param pbkdfAlgorithm
-//     * @param iterations
-//     * @return
-//     */
-//    private String pbkdfHashString(char[] password, String pbkdfAlgorithm, int iterations, int saltBitLength){
-//        //Generate secure random salt
-//        byte[] salt = generateSaltBytes(saltBitLength);
-//        setmSaltBitLength(saltBitLength);
-//
-//        //Setup the PBKD function
-//        PBEKeySpec keySpec = new PBEKeySpec(password, salt, iterations, saltBitLength);
-//        setmPBKDFiterations(iterations);
-//
-//        byte[] hashedBytes = null;
-//        SecretKeyFactory keyFactory = null;
-//
-//        try{
-//            keyFactory = SecretKeyFactory.getInstance(PBKDF_ALGORITHM);
-//            hashedBytes = keyFactory.generateSecret(keySpec).getEncoded();
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        } catch (InvalidKeySpecException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //For the UI
-//        Log.d(TAG, "pbkdfHashString(): secretKeyFactory.getProvider(): " + keyFactory.getProvider() + ", kf.getAlgorithm(): " + keyFactory.getAlgorithm());
-//        if(keyFactory.getProvider().getName() != null){
-//            setmPBKDFprovider(keyFactory.getProvider().getName());
-//        } else {
-//            setmPBKDFprovider(NA_STRING);
-//        }
-//
-//        //For the UI
-//        if(keyFactory.getAlgorithm().toString() != null){
-//            setmPBKDFalgorithm(keyFactory.getAlgorithm().toString());
-//        } else {
-//            setmPBKDFalgorithm(NA_STRING);
-//        }
-//
-//        //For the UI
-//        if(hashedBytes == null){
-//            Log.d(TAG, "pbkdfHashString(): hashedBytes = NULL");
-//            return null;
-//        }
-//
-//        Log.d(TAG, "pbkdfHashString(): PBKDF hash generated successfully.");
-//        return encodeHexString(hashedBytes); //Hash of the input in hex encoding
-//    }
-//
-//    /**
-//     * Takes a Message Digest or any other byte
-//     * array and converts it into a hexidecimal
-//     * string using a format string for hex.
-//     * @param byteArray
-//     * @return
-//     */
-//    private String encodeHexString(byte[] byteArray){
-//        StringBuilder sb = new StringBuilder();
-//
-//        for(byte b : byteArray){
-//            sb.append(String.format(HEX_FORMATTER, b));
-//        }
-//
-//        Log.d(TAG, "encodeHexString(): Byte array encoded to HEX string.");
-//
-//        return sb.toString();
-//    }
-
-    // ============ Getters and Setters for Module Variables  ======== //
-    public String getmHashProvider() {
-        return mHashProvider;
+    /**
+     * Extracts the user supplied text from an EditText and
+     * stores it in a character array.
+     * @param editText
+     * @return
+     */
+    private char[] getTextInputAsCharacterArray(EditText editText){
+        //The EditText object supposedly uses char[] at the core so we don't need
+        // to worry about string objects remaining for passwords and can extract the chars directly.
+        char[] inputMessageChars = new char[getInputTextLength(editTextInput)];
+        editTextInput.getText().getChars(0, getInputTextLength(editTextInput), inputMessageChars, 0);
+        Log.d(LogTag.TAG, "getTextInputAsCharacterArray = " + inputMessageChars.toString());
+        //TODO Call the CryptoUtils.secure erase method in the onPause() of this to erase our chars
+        return inputMessageChars;
     }
 
-    public void setmHashProvider(String mProvider) {
-        this.mHashProvider = mProvider;
+    /**
+     * Returns the length of the char[] from the
+     * supplied EditText.
+     * @param editText
+     * @return
+     */
+    private int getInputTextLength(EditText editText){
+        return editText.getText().length();
     }
 
-    public String getmHashAlgorithm() {
-        return mHashAlgorithm;
+    /**
+     * Forces the soft keyboard to close so we can
+     * see the entire screen.
+     */
+    private void hideKeyboard(){
+        //Hide the keyboard so we can see the screen
+        InputMethodManager inputManager = (InputMethodManager)
+                getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
-    public void setmHashAlgorithmr(String mHashAlgorithm) {
-        this.mHashAlgorithm = mHashAlgorithm;
+    private void setText(TextView tv, String text){
+        tv.setText(text);
     }
 
-    public byte[] getmSalt() {
-        return mSalt;
+    private void setText(TextView tv, int formatterResourceId, String text){
+        tv.setText(String.format(mResources.getString(formatterResourceId), text));
     }
 
-    private void setmSalt(byte[] mSalt) {
-        this.mSalt = mSalt;
+    private void resetStringText(TextView tv, int formatterResourceId){
+        tv.setText(String.format(mResources.getString(formatterResourceId), mResources.getString(R.string.empty)));
     }
 
-    public String getmPBKDFprovider() {
-        return mPBKDFprovider;
+    private void resetIntegerText(TextView tv, int formatterResourceId){
+        tv.setText(String.format(mResources.getString(formatterResourceId), 0));
     }
 
-    private void setmPBKDFprovider(String mPBKDFprovider) {
-        this.mPBKDFprovider = mPBKDFprovider;
-    }
+    /**
+     * Sets all String formatted TextViews to the empty
+     * string and all decimal formatted TextViews to '0'.
+     */
+    private void resetTextViews(){
+        //Regular Hash UI elements
+        resetStringText(textViewHashAlgorithm, R.string.hash_algorithm);
+        resetStringText(textViewHashProvider, R.string.hash_provider);
 
-    public String getmPBKDFalgorithm() {
-        return mPBKDFalgorithm;
-    }
+        //PBKDF2 UI Elements
+        resetStringText(textviewPBKDFAlgorithm, R.string.pbkdf_algorithm);
+        resetStringText(textviewPBKDFprovider, R.string.pbkdf_provider);
+        resetStringText(textviewPBKDFsalt, R.string.pbkdf_salt);
+        resetIntegerText(textviewPBKDFsaltBitLength, R.string.pbkdf_salt_bitLength);
+        resetIntegerText(textviewPBKDiterations, R.string.pbkdf_iterations);
 
-    private void setmPBKDFalgorithm(String mPBKDFalgorithm) {
-        this.mPBKDFalgorithm = mPBKDFalgorithm;
-    }
-
-    private void setmSaltBitLength(int saltBitLength){
-        this.mSaltBitLength = saltBitLength;
-    }
-
-    public int getmSaltBitLength(){
-        return mSaltBitLength;
-    }
-
-    private void setmPBKDFiterations(int iterations){
-        this.mPBKDFiterations = iterations;
-    }
-
-    public int getmPBKDFiterations(){
-        return mPBKDFiterations;
-    }
-
-    public String getmHashString() {
-        return mHashString;
-    }
-
-    public void setmHashString(String mHashString) {
-        this.mHashString = mHashString;
-    }
-
-    public String getmPBKDFhashString() {
-        return mPBKDFhashString;
-    }
-
-    public void setmPBKDFhashString(String mPBKDFhashString) {
-        this.mPBKDFhashString = mPBKDFhashString;
     }
 
     // ============ Callbacks for Updating the User Interface After Hashing Complete ======== //
     @Override
     public void onHashComplete(String hashString, String provider, String algorithm) {
         Log.d(LogTag.TAG, "onHashComplete(): hashString= " + hashString + ", Provider= " + provider + ", Algorithm= " + algorithm);
-        //TODO Change these to use the helper methods defined above
-        textViewHash.setText(hashString);
-        textViewHashAlgorithm.setText(String.format(mResources.getString(R.string.hash_algorithm), algorithm));
-        textViewHashProvider.setText(String.format(mResources.getString(R.string.hash_provider), provider));
+        setText(textViewHash, hashString);
+        setText(textViewHashAlgorithm, R.string.hash_algorithm, algorithm);
+        setText(textViewHashProvider, R.string.hash_provider, provider);
+        //TODO Implement textViews that show bit count of the hash and input
+
     }
 
-    //TODO change this into the overridden callback after implementing it in the Interface
-    public void updatePBKDFhashUserInterface() {
+    @Override
+    public void onPBKDF2Complete(String hashString, String provider, String algorithm) {
         Log.d(LogTag.TAG, "onPBKDFhashComplete()");
-        //TODO Change these to use the helper methods defined above
-        textViewPBKDFhash.setText(getmPBKDFhashString());
-        textviewPBKDFsalt.setText(String.format(mResources.getString(R.string.pbkdf_salt), getmSalt()));
-        textviewPBKDFsaltBitLength.setText(String.format(mResources.getString(R.string.pbkdf_salt_bitLength), getmSaltBitLength()));
-        textviewPBKDFAlgorithm.setText(String.format(mResources.getString(R.string.pbkdf_algorithm), getmPBKDFalgorithm()));
-        textviewPBKDFprovider.setText(String.format(mResources.getString(R.string.pbkdf_provider), getmPBKDFprovider()));
-        textviewPBKDiterations.setText(String.format(mResources.getString(R.string.pbkdf_iterations), getmPBKDFiterations()));
+        //TODO Implement calls to set the PBKDF2 UI elements
     }
 
 }//End Class
