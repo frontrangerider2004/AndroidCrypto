@@ -308,6 +308,11 @@ public class CryptoUtils {
         return salt;
     }
 
+    private byte[] getSaltFromSystemParams(int numberofBytes){
+        byte[] salt = new byte[numberofBytes];
+        return salt;
+    }
+
     /**
      * Generates a keyed, stretched, and multi-iterated
      * hash of the supplied character array using the
@@ -356,11 +361,55 @@ public class CryptoUtils {
 
         //For the UI
         if(hashedBytes == null){
-            Log.d(LogTag.TAG, "pbkdfHashString(): hashedBytes = NULL");
+            Log.d(LogTag.TAG, "generatePBKDF2Key(): hashedBytes = NULL");
             return null;
         }
 
-        Log.d(LogTag.TAG, "pbkdfHashString(): PBKDF hash generated successfully.");
+        Log.d(LogTag.TAG, "generatePBKDF2Key(): PBKDF Key generated successfully.");
+        return generateHexEncoder(hexFormatFontCase).encodeHexString(hashedBytes); //Hash of the input in hex encoding
+    }
+
+    //TODO Change this so we don't have duplicated code
+    public String generatePBKDF2Key(char[] password, String algorithmPBKDF2, int iterations, int keyBitLength, byte[] salt, HexFormatFontCase hexFormatFontCase){
+        //Setup the PBKD function
+        PBEKeySpec keySpec = new PBEKeySpec(password, salt, iterations, keyBitLength);
+
+        byte[] hashedBytes = null;
+        SecretKeyFactory keyFactory = null;
+
+        try{
+            keyFactory = SecretKeyFactory.getInstance(algorithmPBKDF2);
+            hashedBytes = keyFactory.generateSecret(keySpec).getEncoded();
+            mPBKDF2keyBitLength = hashedBytes.length;
+            Log.d(LogTag.TAG, "generatePBKDF2Key(): successfully generated PBKDF2 key!");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
+        //For the UI
+        Log.d(LogTag.TAG, "generatePBKDF2Key(): secretKeyFactory.getProvider(): " + keyFactory.getProvider() + ", kf.getAlgorithm(): " + keyFactory.getAlgorithm());
+        if(keyFactory.getProvider().getName() != null){
+            mSystemPBKDF2provider = (keyFactory.getProvider().getName());
+        } else {
+            mSystemPBKDF2provider = NA_STRING;
+        }
+
+        //For the UI
+        if(keyFactory.getAlgorithm().toString() != null){
+            mSystemPBKDF2algorithm = keyFactory.getAlgorithm().toString();
+        } else {
+            mSystemPBKDF2algorithm = NA_STRING;
+        }
+
+        //For the UI
+        if(hashedBytes == null){
+            Log.d(LogTag.TAG, "generatePBKDF2Key(): hashedBytes = NULL");
+            return null;
+        }
+
+        Log.d(LogTag.TAG, "generatePBKDF2Key(): PBKDF Key generated successfully.");
         return generateHexEncoder(hexFormatFontCase).encodeHexString(hashedBytes); //Hash of the input in hex encoding
     }
 

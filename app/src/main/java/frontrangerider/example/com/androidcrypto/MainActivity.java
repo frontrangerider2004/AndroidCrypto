@@ -2,6 +2,10 @@ package frontrangerider.example.com.androidcrypto;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 
@@ -13,6 +17,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Button;
+
+import java.util.Properties;
 
 import frontrangerider.example.com.androidcrypto.interfaces.InterfaceHashStatus;
 import frontrangerider.example.com.androidcrypto.utils.CryptoUtils;
@@ -74,6 +80,9 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
         registerClickListeners();
 
         resetTextViews();
+
+        //TODO Delete after testing
+        printBuildSpecs();
     }
 
     @Override
@@ -199,6 +208,20 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
         resetStringText(textviewPBKDFsalt, R.string.pbkdf_salt);
         resetIntegerText(textviewPBKDFsaltBitLength, R.string.pbkdf_salt_bitLength);
         resetIntegerText(textviewPBKDiterations, R.string.pbkdf_iterations);
+
+    }
+
+    //TODO Delete this after testing
+    private void printBuildSpecs(){
+        WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = manager.getConnectionInfo();
+        String address = info.getMacAddress();
+        Log.d(LogTag.TAG, "MAC = " + address);
+
+        Log.d(LogTag.TAG, "Board = " + Build.BOARD);
+        Log.d(LogTag.TAG, "Fingerprint = " + Build.FINGERPRINT);
+        Log.d(LogTag.TAG, "Hardware = " + Build.HARDWARE);
+        Log.d(LogTag.TAG, "Bootloader = " + Build.BOOTLOADER);
 
     }
 
