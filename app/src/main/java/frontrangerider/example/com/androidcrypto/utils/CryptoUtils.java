@@ -5,6 +5,7 @@ import android.util.Log;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class CryptoUtils {
 
@@ -28,6 +29,12 @@ public class CryptoUtils {
      */
     public static enum HexFormatFontCase{UPPER, LOWER}
 
+    /**
+     * Stores the conversion of the supplied character array
+     * into bytes.
+     */
+    private byte[] mMessageBytes = null;
+
     //For use with basic hashing -----------------------------------
     //TODO Create an Enum class for holding the algorithms and
     // update the code to use these instead of the strings below.
@@ -45,8 +52,8 @@ public class CryptoUtils {
      */
     public static final String ALGORITHM_SHA512 = "SHA-512";
 
-    private String mSystemProviderHash = null;
-    private String mSystemAlgorithmHash = null;
+    private String mSystemHashProvider = null;
+    private String mSystemHashAlgorithm = null;
     private String mHashString = null;
 
     //For use with Password Based Key Derivation ---------------------
@@ -92,27 +99,80 @@ public class CryptoUtils {
 
     //Getters and Setters -----------------------------------------------------
 
-    public String getmSystemProviderHash() {
-        return mSystemProviderHash;
+    /**
+     * Returns the Security Provider used to perform
+     * regular hashing or Null if @call hashMessage() has
+     * not been called.
+     * @return
+     */
+    public String getmSystemHashProvider() {
+        return mSystemHashProvider;
     }
 
-    public String getmSystemAlgorithmHash() {
-        return mSystemAlgorithmHash;
+    /**
+     * Returns the Security Provider's algorithm used to perform
+     * regular hashing or Null if @call hashMessage() has
+     * not been called. This can be used to compared what the
+     * system is using to what has been specified at time of
+     * initialization.
+     * @return
+     */
+    public String getmSystemHashAlgorithm() {
+        return mSystemHashAlgorithm;
+    }
+
+    /**
+     * Replace all characters in the array with zeros per the
+     * Sun Java recommended method for handling password inputs.
+     * @param chars
+     */
+    public static void secureOverwriteCharacterArray(char[] chars){
+        if(chars != null && chars.length > 0){
+            Arrays.fill(chars, '0');
+            Log.d(LogTag.TAG, "secureOverwriteCharacterArray() complete! ");
+        } else {
+            Log.d(LogTag.TAG, "secureOverwriteCharacterArray() ERROR: Attempted to overwrite null array");
+        }
+
+    }
+
+    /**
+     * Replace all the bytes in the array with zeros per the
+     * Sun Java recommended method for handling password inputs.
+     * @param bytes
+     */
+    public static void secureOverwriteByteArray(byte[] bytes){
+        if(bytes != null && bytes.length > 0){
+            Arrays.fill(bytes, (byte) 0);
+            Log.d(LogTag.TAG, "secureOverwriteByteArray() complete!");
+        } else {
+            Log.d(LogTag.TAG, "secureOverwriteByteArray() ERROR: Attempted to overwrite null array");
+        }
+
     }
 
     /**
      * Convert each character in the supplied array to bytes assuming
-     * each char is one byte meaning either ASCII or UTF8 encoding.
+     * each char is one byte meaning either ASCII or the ASCII set of
+     * UTF8 encoding.
      * @param charsUTF8encoded
      * @return
      */
     private byte[] convertCharacterArrayToBytes(char[] charsUTF8encoded){
-        byte[] messageBytes = null;
+        //NOTE: If using the full UTF-8 encoding set this will not work
+        // becuse some characters can hve up to 4 bytes.
+
+        //If we somehow have a byte[] sitting around then erase it first.
+        if(mMessageBytes != null && mMessageBytes.length > 0){
+            secureOverwriteByteArray(mMessageBytes);
+        }
+        
+        mMessageBytes = new byte[charsUTF8encoded.length];
         for(int i = 0; i <= ((charsUTF8encoded.length - 1)); i++){
-            messageBytes[i] = (byte) charsUTF8encoded[i];
+            mMessageBytes[i] = (byte) charsUTF8encoded[i];
         }
 
-        return messageBytes;
+        return mMessageBytes;
     }
 
     /**
@@ -128,9 +188,11 @@ public class CryptoUtils {
         switch(hexFormatFontCase){
             case LOWER:
                 hexEncoder = new SimpleHexEncoder(SimpleHexEncoder.FontCase.LOWER);
+                Log.d(LogTag.TAG, "SimpleHexEncoder created for LOWER CASE.");
                 break;
             case UPPER:
                 hexEncoder = new SimpleHexEncoder(SimpleHexEncoder.FontCase.UPPER);
+                Log.d(LogTag.TAG, "SimpleHexEncoder created for UPPER CASE.");
                 break;
             default:
                 Log.d(LogTag.TAG, "Cannot create SimpleHexEncoder, unknown FontCase. Should be Upper or Lower.");
@@ -153,32 +215,39 @@ public class CryptoUtils {
         MessageDigest messageDigest = null;
         byte[] digestBytes = null;
 
+        Log.d(LogTag.TAG, "hashMessage(): Attempting to configure a MessageDigest...");
         //Generate the hash of the supplied message
         try {
             messageDigest = MessageDigest.getInstance(algorithmName);
             messageDigest.update(convertCharacterArrayToBytes(messageUTF8encoded)); //Each call to update will reset the digest.
             digestBytes = messageDigest.digest(); //Get the raw bytes after hashing is complete.
+            Log.d(LogTag.TAG, "hashMessage(): MessageDigest successfully created!");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
 
         //For the UI
         if(messageDigest.getAlgorithm() != null){
-            mSystemAlgorithmHash = messageDigest.getAlgorithm();
-            Log.d(LogTag.TAG, "hashString(): messageDigest.getAlgorithm(): " + messageDigest.getAlgorithm());
+            mSystemHashAlgorithm = messageDigest.getAlgorithm();
+            Log.d(LogTag.TAG, "hashMessage(): messageDigest.getAlgorithm(): " + messageDigest.getAlgorithm());
         } else {
-            mSystemAlgorithmHash = NA_STRING;
+            mSystemHashAlgorithm = NA_STRING;
         }
 
         //For the UI
         if(messageDigest.getProvider().getName() != null){
-            mSystemProviderHash = messageDigest.getProvider().getName();
-            Log.d(LogTag.TAG, "hashString(): messageDigest.getProvider(): " + messageDigest.getProvider().getName());
+            mSystemHashProvider = messageDigest.getProvider().getName();
+            Log.d(LogTag.TAG, "hashMessage(): messageDigest.getProvider(): " + messageDigest.getProvider().getName());
         } else {
-            mSystemProviderHash = NA_STRING;
+            mSystemHashProvider = NA_STRING;
         }
 
-        Log.d(LogTag.TAG, "hashString(): Successfully hashed the input string.");
+        //Erase the supplied character array and the generated array
+        // used to convert from chars to bytes.
+        secureOverwriteCharacterArray(messageUTF8encoded);
+        secureOverwriteByteArray(mMessageBytes);
+
+        Log.d(LogTag.TAG, "hashMessage(): SUCCESS!");
         return generateHexEncoder(hexFormatFontCase).encodeHexString(digestBytes); //The hash of the text in hex encoding
     }
 
@@ -192,5 +261,80 @@ public class CryptoUtils {
     public String hashMessage(char[] messageUTF8Encoded, String algorithmName){
         return hashMessage(messageUTF8Encoded, algorithmName, HexFormatFontCase.LOWER);
     }
+
+    //    /**
+//     * Gets the specified number of secure random bytes
+//     * using the javax security API and returns this
+//     * array for use as a salt in PBKD functions.
+//     * @param numberOfBytes
+//     * @return
+//     */
+//    private byte[] generateSaltBytes(int numberOfBytes){
+//        SecureRandom secureRandom = new SecureRandom();
+//        byte[] salt = new byte[numberOfBytes];
+//        secureRandom.nextBytes(salt);
+//
+//        Log.d(TAG, "generateSaltBytes(): Salt generation complete.");
+//
+//        setmSalt(salt);
+//
+//        return salt;
+//    }
+//
+//    /**
+//     * Generates a keyed, stretched, and multi-iterated
+//     * hash of the supplied character array using the
+//     * supplied algorithm and number of iterations.
+//     * @param password
+//     * @param saltBitLength
+//     * @param pbkdfAlgorithm
+//     * @param iterations
+//     * @return
+//     */
+//    private String pbkdfHashString(char[] password, String pbkdfAlgorithm, int iterations, int saltBitLength){
+//        //Generate secure random salt
+//        byte[] salt = generateSaltBytes(saltBitLength);
+//        setmSaltBitLength(saltBitLength);
+//
+//        //Setup the PBKD function
+//        PBEKeySpec keySpec = new PBEKeySpec(password, salt, iterations, saltBitLength);
+//        setmPBKDFiterations(iterations);
+//
+//        byte[] hashedBytes = null;
+//        SecretKeyFactory keyFactory = null;
+//
+//        try{
+//            keyFactory = SecretKeyFactory.getInstance(PBKDF_ALGORITHM);
+//            hashedBytes = keyFactory.generateSecret(keySpec).getEncoded();
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        } catch (InvalidKeySpecException e) {
+//            e.printStackTrace();
+//        }
+//
+//        //For the UI
+//        Log.d(TAG, "pbkdfHashString(): secretKeyFactory.getProvider(): " + keyFactory.getProvider() + ", kf.getAlgorithm(): " + keyFactory.getAlgorithm());
+//        if(keyFactory.getProvider().getName() != null){
+//            setmPBKDFprovider(keyFactory.getProvider().getName());
+//        } else {
+//            setmPBKDFprovider(NA_STRING);
+//        }
+//
+//        //For the UI
+//        if(keyFactory.getAlgorithm().toString() != null){
+//            setmPBKDFalgorithm(keyFactory.getAlgorithm().toString());
+//        } else {
+//            setmPBKDFalgorithm(NA_STRING);
+//        }
+//
+//        //For the UI
+//        if(hashedBytes == null){
+//            Log.d(TAG, "pbkdfHashString(): hashedBytes = NULL");
+//            return null;
+//        }
+//
+//        Log.d(TAG, "pbkdfHashString(): PBKDF hash generated successfully.");
+//        return encodeHexString(hashedBytes); //Hash of the input in hex encoding
+//    }
 
 }//End Class
