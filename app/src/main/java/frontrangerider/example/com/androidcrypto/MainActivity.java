@@ -31,32 +31,12 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
 
     //PBKDF Hashing UI
     private TextView textViewPBKDFhash;
+    private TextView textViewPBKDFkeyBitLength;
     private TextView textviewPBKDFAlgorithm;
     private TextView textviewPBKDiterations;
     private TextView textviewPBKDFprovider;
     private TextView textviewPBKDFsalt;
     private TextView textviewPBKDFsaltBitLength;
-
-    //For use with basic hashing
-    private static final String SHA_ALGORITHM = "SHA-256"; //Minimum algorithm strength
-    private static final String UTF_ENCODING = "UTF-8"; //Best practice for computing hashes
-    private static final String HEX_FORMATTER = "%02x"; //Read two bytes as lower case hex
-    private String mHashProvider = null;
-    private String mHashAlgorithm = null;
-    private String mHashString = null;
-
-    //For use with key stretching
-    private static final String PBKDF_ALGORITHM = "PBKDF2WithHmacSHA1";
-    private static final int SALT_BYTE_SIZE = 32; //Should be equal to hash byte size
-    private static final int SALT_BIT_SIZE = 256; //Conversion of bytes to bits
-    private static final int PBKDF_ITERATIONS = 10; //Make proportional to minimum tolerable UX delay
-    private static final String NA_STRING = "N/A";
-    private byte[] mSalt = null;
-    private String mPBKDFprovider = null;
-    private String mPBKDFalgorithm = null;
-    private int mPBKDFiterations = 0;
-    private int mSaltBitLength = 0;
-    private String mPBKDFhashString = null;
 
     private Resources mResources;
 
@@ -84,6 +64,7 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
 
         //PBKDF Hashing UI
         textViewPBKDFhash = (TextView) findViewById(R.id.textView_pbkdf_hashed);
+        textViewPBKDFkeyBitLength = (TextView) findViewById(R.id.textView_pbkdf_key_bit_length);
         textviewPBKDFsalt = (TextView) findViewById(R.id.textView_pbkdf_salt);
         textviewPBKDFAlgorithm = (TextView) findViewById(R.id.textView_pbkdf_algorithm);
         textviewPBKDFprovider = (TextView) findViewById(R.id.textView_pbkdf_provider);
@@ -127,9 +108,10 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
             hideKeyboard();
 
             //TODO Hash the string normally
-            new AsyncTaskDoCryptoInBackground(interfaceHashStatus, CryptoUtils.ALGORITHM_SHA256, getTextInputAsCharacterArray(editTextInput)).execute();
+            new AsyncTaskDoCryptoInBackground(interfaceHashStatus, AsyncTaskDoCryptoInBackground.CryptoOperation.HASH, CryptoUtils.ALGORITHM_SHA256, getTextInputAsCharacterArray(editTextInput)).execute();
 
             //TODO hash the string with the PBKDF methods
+            new AsyncTaskDoCryptoInBackground(interfaceHashStatus, AsyncTaskDoCryptoInBackground.CryptoOperation.PBKDF2, CryptoUtils.ALGORITHM_PBKDF2_HMAC_SHA1, CryptoUtils.PBKDF2_MIN_ITERATIONS, CryptoUtils.SALT_BIT_SIZE, getTextInputAsCharacterArray(editTextInput)).execute();
         }
     };
 
@@ -189,6 +171,10 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
         tv.setText(String.format(mResources.getString(formatterResourceId), text));
     }
 
+    private void setText(TextView tv, int formatterResourceId, int number){
+        tv.setText(String.format(mResources.getString(formatterResourceId), number));
+    }
+
     private void resetStringText(TextView tv, int formatterResourceId){
         tv.setText(String.format(mResources.getString(formatterResourceId), mResources.getString(R.string.empty)));
     }
@@ -208,6 +194,7 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
 
         //PBKDF2 UI Elements
         resetStringText(textviewPBKDFAlgorithm, R.string.pbkdf_algorithm);
+        resetIntegerText(textViewPBKDFkeyBitLength, R.string.pbkdf_key_bitLength);
         resetStringText(textviewPBKDFprovider, R.string.pbkdf_provider);
         resetStringText(textviewPBKDFsalt, R.string.pbkdf_salt);
         resetIntegerText(textviewPBKDFsaltBitLength, R.string.pbkdf_salt_bitLength);
@@ -227,9 +214,16 @@ public class MainActivity extends ActionBarActivity implements InterfaceHashStat
     }
 
     @Override
-    public void onPBKDF2Complete(String hashString, String provider, String algorithm) {
+    public void onPBKDF2Complete(String hashString, int keyBitLength, String provider, String algorithm, String salt, int saltBitLength, int iterations) {
         Log.d(LogTag.TAG, "onPBKDFhashComplete()");
         //TODO Implement calls to set the PBKDF2 UI elements
+        setText(textViewPBKDFhash, hashString);
+        setText(textViewPBKDFkeyBitLength, R.string.pbkdf_key_bitLength, keyBitLength);
+        setText(textviewPBKDFprovider, R.string.pbkdf_provider, provider);
+        setText(textviewPBKDFAlgorithm, R.string.pbkdf_algorithm, algorithm);
+        setText(textviewPBKDFsalt, R.string.pbkdf_salt, salt);
+        setText(textviewPBKDFsaltBitLength, R.string.pbkdf_salt_bitLength, saltBitLength);
+        setText(textviewPBKDiterations, R.string.pbkdf_iterations, iterations);
     }
 
 }//End Class

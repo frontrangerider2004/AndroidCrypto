@@ -5,7 +5,12 @@ import android.util.Log;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 public class CryptoUtils {
 
@@ -52,6 +57,7 @@ public class CryptoUtils {
      */
     public static final String ALGORITHM_SHA512 = "SHA-512";
 
+    private static final int EIGHT_INT = 8;
     private String mSystemHashProvider = null;
     private String mSystemHashAlgorithm = null;
     private String mHashString = null;
@@ -79,7 +85,7 @@ public class CryptoUtils {
      * be equal to the hash bit length according to
      * best practice.
      */
-    private static final int SALT_BIT_SIZE = 256; //Conversion of bytes to bits
+    public static final int SALT_BIT_SIZE = 256; //Conversion of bytes to bits
 
     /**
      * Integer used to specify the minimum number of PBKDF hash
@@ -88,14 +94,12 @@ public class CryptoUtils {
      * be adjusted for computing performance to produce an
      * acceptable delay (AKA computational penalty).
      */
-    private static final int PBKDF2_MIN_ITERATIONS = 1000; //Minimum required per the PBKDF2 spec
+    public static final int PBKDF2_MIN_ITERATIONS = 1000; //Minimum required per the PBKDF2 spec
 
     private byte[] mSalt = null;
-    private String mPBKDFprovider = null;
-    private String mPBKDFalgorithm = null;
-    private int mPBKDFiterations = 0;
-    private int mSaltBitLength = 0;
-    private String mPBKDFhashString = null;
+    private int mPBKDF2keyBitLength = 0;
+    private String mSystemPBKDF2provider = null;
+    private String mSystemPBKDF2algorithm = null;
 
     //Getters and Setters -----------------------------------------------------
 
@@ -121,6 +125,31 @@ public class CryptoUtils {
         return mSystemHashAlgorithm;
     }
 
+    public String getmSystemPBKDF2algorithm() {
+        return mSystemPBKDF2algorithm;
+    }
+
+    public String getmSystemPBKDF2provider() {
+        return mSystemPBKDF2provider;
+    }
+
+    public String getmSaltString() {
+        return generateHexEncoder(HexFormatFontCase.LOWER).encodeHexString(mSalt);
+    }
+
+    public byte[] getmSalt(){
+        return mSalt;
+    }
+
+    public int getmSaltBitLength(){
+        return mSalt.length * EIGHT_INT;
+    }
+
+    public int getmPBKDF2keyBitLength(){
+        return mPBKDF2keyBitLength * EIGHT_INT;
+    }
+
+    // Functional Code -----------------------------------------------------
     /**
      * Replace all characters in the array with zeros per the
      * Sun Java recommended method for handling password inputs.
@@ -262,79 +291,89 @@ public class CryptoUtils {
         return hashMessage(messageUTF8Encoded, algorithmName, HexFormatFontCase.LOWER);
     }
 
-    //    /**
-//     * Gets the specified number of secure random bytes
-//     * using the javax security API and returns this
-//     * array for use as a salt in PBKD functions.
-//     * @param numberOfBytes
-//     * @return
-//     */
-//    private byte[] generateSaltBytes(int numberOfBytes){
-//        SecureRandom secureRandom = new SecureRandom();
-//        byte[] salt = new byte[numberOfBytes];
-//        secureRandom.nextBytes(salt);
-//
-//        Log.d(TAG, "generateSaltBytes(): Salt generation complete.");
-//
-//        setmSalt(salt);
-//
-//        return salt;
-//    }
-//
-//    /**
-//     * Generates a keyed, stretched, and multi-iterated
-//     * hash of the supplied character array using the
-//     * supplied algorithm and number of iterations.
-//     * @param password
-//     * @param saltBitLength
-//     * @param pbkdfAlgorithm
-//     * @param iterations
-//     * @return
-//     */
-//    private String pbkdfHashString(char[] password, String pbkdfAlgorithm, int iterations, int saltBitLength){
-//        //Generate secure random salt
-//        byte[] salt = generateSaltBytes(saltBitLength);
-//        setmSaltBitLength(saltBitLength);
-//
-//        //Setup the PBKD function
-//        PBEKeySpec keySpec = new PBEKeySpec(password, salt, iterations, saltBitLength);
-//        setmPBKDFiterations(iterations);
-//
-//        byte[] hashedBytes = null;
-//        SecretKeyFactory keyFactory = null;
-//
-//        try{
-//            keyFactory = SecretKeyFactory.getInstance(PBKDF_ALGORITHM);
-//            hashedBytes = keyFactory.generateSecret(keySpec).getEncoded();
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        } catch (InvalidKeySpecException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //For the UI
-//        Log.d(TAG, "pbkdfHashString(): secretKeyFactory.getProvider(): " + keyFactory.getProvider() + ", kf.getAlgorithm(): " + keyFactory.getAlgorithm());
-//        if(keyFactory.getProvider().getName() != null){
-//            setmPBKDFprovider(keyFactory.getProvider().getName());
-//        } else {
-//            setmPBKDFprovider(NA_STRING);
-//        }
-//
-//        //For the UI
-//        if(keyFactory.getAlgorithm().toString() != null){
-//            setmPBKDFalgorithm(keyFactory.getAlgorithm().toString());
-//        } else {
-//            setmPBKDFalgorithm(NA_STRING);
-//        }
-//
-//        //For the UI
-//        if(hashedBytes == null){
-//            Log.d(TAG, "pbkdfHashString(): hashedBytes = NULL");
-//            return null;
-//        }
-//
-//        Log.d(TAG, "pbkdfHashString(): PBKDF hash generated successfully.");
-//        return encodeHexString(hashedBytes); //Hash of the input in hex encoding
-//    }
+
+    /**
+     * Gets the specified number of secure random bytes
+     * using the javax security API and returns this
+     * array for use as a salt in PBKD functions.
+     * @param numberOfBytes
+     * @return
+     */
+    private byte[] generateSaltBytes(int numberOfBytes){
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] salt = new byte[numberOfBytes];
+        secureRandom.nextBytes(salt);
+
+        Log.d(LogTag.TAG, "generateSaltBytes(): Salt generation complete.");
+        return salt;
+    }
+
+    /**
+     * Generates a keyed, stretched, and multi-iterated
+     * hash of the supplied character array using the
+     * supplied algorithm and number of iterations.
+     * @param password
+     * @param keyBitLength
+     * @param algorithmPBKDF2
+     * @param iterations
+     * @return
+     */
+    public String generatePBKDF2Key(char[] password, String algorithmPBKDF2, int iterations, int keyBitLength, HexFormatFontCase hexFormatFontCase){
+        //Generate secure random salt
+        mSalt = generateSaltBytes(keyBitLength / EIGHT_INT);
+
+        //Setup the PBKD function
+        PBEKeySpec keySpec = new PBEKeySpec(password, mSalt, iterations, keyBitLength);
+
+        byte[] hashedBytes = null;
+        SecretKeyFactory keyFactory = null;
+
+        try{
+            keyFactory = SecretKeyFactory.getInstance(algorithmPBKDF2);
+            hashedBytes = keyFactory.generateSecret(keySpec).getEncoded();
+            mPBKDF2keyBitLength = hashedBytes.length;
+            Log.d(LogTag.TAG, "generatePBKDF2Key(): successfully generated PBKDF2 key!");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
+        //For the UI
+        Log.d(LogTag.TAG, "generatePBKDF2Key(): secretKeyFactory.getProvider(): " + keyFactory.getProvider() + ", kf.getAlgorithm(): " + keyFactory.getAlgorithm());
+        if(keyFactory.getProvider().getName() != null){
+            mSystemPBKDF2provider = (keyFactory.getProvider().getName());
+        } else {
+            mSystemPBKDF2provider = NA_STRING;
+        }
+
+        //For the UI
+        if(keyFactory.getAlgorithm().toString() != null){
+            mSystemPBKDF2algorithm = keyFactory.getAlgorithm().toString();
+        } else {
+            mSystemPBKDF2algorithm = NA_STRING;
+        }
+
+        //For the UI
+        if(hashedBytes == null){
+            Log.d(LogTag.TAG, "pbkdfHashString(): hashedBytes = NULL");
+            return null;
+        }
+
+        Log.d(LogTag.TAG, "pbkdfHashString(): PBKDF hash generated successfully.");
+        return generateHexEncoder(hexFormatFontCase).encodeHexString(hashedBytes); //Hash of the input in hex encoding
+    }
+
+    /**
+     * Generates PBKDF2 key using a default lower case hex encoder
+     * @param password
+     * @param algorithmPBKDF2
+     * @param iterations
+     * @param saltBitLength
+     * @return
+     */
+    public String generatePBKDF2Key(char[] password, String algorithmPBKDF2, int iterations, int saltBitLength){
+        return generatePBKDF2Key(password, algorithmPBKDF2, iterations, saltBitLength, HexFormatFontCase.LOWER);
+    }
 
 }//End Class

@@ -11,6 +11,6 @@ public interface InterfaceHashStatus {
      */
     public void onHashComplete(String hashString, String provider, String algorithm);
 
-    public void onPBKDF2Complete(String hashString, String provider, String algorithm);
+    public void onPBKDF2Complete(String hashString, int keyBitLength, String provider, String algorithm, String salt, int saltBitLength, int iterations);
 
 }//End Interface

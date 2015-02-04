@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">Cyrpto Example</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="empty"></string>
 
@@ -12,10 +11,10 @@
     <string name="hash_provider">Provider: %1$s</string>
 
     <!-- PBKF Hash User Display -->
-    <string name="pbkdf_title">PBKDF Hash:</string>
+    <string name="pbkdf_title">PBKDF2 Key:</string>
     <string name="pbkdf_salt">Salt: %1$s</string>
     <string name="pbkdf_salt_bitLength">Salt Bit Length: %1$d</string>
-    <string name="pbkdf_key">Key: %1$s</string>
+    <string name="pbkdf_key_bitLength">Key Bit Length: %1$d</string>
     <string name="pbkdf_algorithm">Algorithm: %1$s</string>
     <string name="pbkdf_provider">Provider: %1$s</string>
     <string name="pbkdf_iterations">Iterations: %1$d</string>

@@ -84,6 +84,14 @@
         android:text="@string/empty"
         />
 
+    <!-- The PBKDF Key Stats -->
+    <TextView
+        android:id="@+id/textView_pbkdf_key_bit_length"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pbkdf_key_bitLength"
+        />
+
     <!-- The PBKDF Salt -->
     <TextView
         android:id="@+id/textView_pbkdf_salt"
